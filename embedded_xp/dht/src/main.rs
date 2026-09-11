@@ -80,6 +80,7 @@ async fn main(spawner: Spawner) -> ! {
     let usb_driver = Driver::new(p.USB, Irqs);
     let mut sensor_pin = Flex::new(p.PIN_0);
     spawner.spawn(logger(usb_driver).unwrap());
+    log::info!("Starting in 10s");
     Timer::after(Duration::from_secs(10)).await;
     loop {
         let measure = dht_read(&mut sensor_pin).await;
