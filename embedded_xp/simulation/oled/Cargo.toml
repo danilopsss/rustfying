@@ -1,0 +1,14 @@
+[package]
+name = "oled"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+embassy-sync = "0.8.0"
+embedded-graphics = "0.8.2"
+embedded-graphics-simulator = "0.8.0"
+tinybmp = "0.7.0"
+
+[[bin]]
+name = "oled"
+path = "main.rs"
