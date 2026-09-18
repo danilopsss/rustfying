@@ -1,0 +1,39 @@
+[package]
+edition = "2024"
+name = "oled"
+version = "0.1.0"
+authors = [""]
+resolver = "2"
+
+[[bin]]
+name = "oled"
+test = false
+bench = false
+
+[dependencies]
+cortex-m-rt = "0.7.5"
+defmt = "1.1"
+defmt-rtt = "1.2"
+panic-probe = { version = "1.0", features = ["print-defmt"] }
+embassy-executor = { version = "0.10", features = ["platform-cortex-m", "executor-thread", "defmt", "executor-interrupt"] }
+embassy-time = { version = "0.5", features = ["defmt", "defmt-timestamp-uptime"] }
+embassy-rp = { version = "0.9", features = ["defmt", "unstable-pac", "time-driver", "critical-section-impl", "rp2040"] }
+embassy-usb-logger = "0.6.0"
+log = "0.4.34"
+embedded-graphics = "0.8.2"
+ssd1306 = { version = "0.10.0", features = ["async"] }
+embassy-sync = "0.8.0"
+heapless = "0.9.3"
+
+
+[profile.dev]
+debug = 2
+lto = true
+strip = true
+codegen-units = 1
+opt-level = 's'
+
+[profile.release]
+debug = 2
+lto = true
+opt-level = "z"

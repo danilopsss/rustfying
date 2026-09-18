@@ -27,18 +27,23 @@ static DISPLAY: Mutex<ThreadModeRawMutex, Option<OledDisplay>> = Mutex::new(None
 static COUNTER: Mutex<ThreadModeRawMutex, u8> = Mutex::new(0);
 
 
-async fn canvas(display: &mut OledDisplay) {
-    Rectangle::new(Point::new(1, 1), Size::new(OLED_SIZE.0 - 2, OLED_SIZE.1 - 2))
-        .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 1))
-        .draw(display)
-        .unwrap();
-    display.flush().expect("cant flush");
+async fn canvas() {
+    let mut guard = DISPLAY.lock().await;
+    if let Some(ref mut display) = *guard {
+        Rectangle::new(Point::new(1, 1), Size::new(OLED_SIZE.0 - 2, OLED_SIZE.1 - 2))
+            .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 1))
+            .draw(display)
+            .unwrap();
+        display.flush().expect("cant flush");
+    }
 }
 
 async fn write(text: &str, pos: Point) {
-    let style = MonoTextStyle::new(&FONT_6X10, BinaryColor::On);
+    let style_color = MonoTextStyle::new(&FONT_6X10, BinaryColor::On);
+    let style_blank = MonoTextStyle::new(&FONT_6X10, BinaryColor::Off);
     let mut is_increasing = true;
     let mut cur_pos: i32 = pos.x;
+    let mut prev_pos = pos;
     loop {
         {
             let mut guard = DISPLAY.lock().await;
@@ -52,12 +57,13 @@ async fn write(text: &str, pos: Point) {
                     let mut counter = COUNTER.lock().await;
                     *counter = counter.saturating_add(1);
                 }
-                display.clear_buffer();
-                Text::new(text, Point::new(cur_pos as i32, pos.y), style).draw(display).unwrap();
+                Text::new(text, prev_pos, style_blank).draw(display).unwrap();
+                prev_pos = Point::new(cur_pos as i32, pos.y);
+                Text::new(text, prev_pos, style_color).draw(display).unwrap();
                 display.flush().unwrap();
                 {
                     let mut counter = COUNTER.lock().await;
-                    if *counter == 3 {
+                    if *counter == 25 {
                         display.set_display_on(false).expect("Can't put display to sleep");
                         *counter = 0;
                     }
@@ -75,8 +81,10 @@ async fn setup() {
         if let Some(ref mut display) = *guard {
             display.init().expect("could not initialize");
         }
+        drop(guard);
+        canvas().await;
+        write("<< Bouncing test >>", Point::new(5, 10)).await;
     }
-    write("Test", Point::new(5, 10)).await;
 }
 
 
